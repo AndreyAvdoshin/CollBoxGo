@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"html/template"
 	"log"
 	"net/http"
 	"strconv"
@@ -13,7 +14,27 @@ func home(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
-	w.Write([]byte("Home Page!"))
+
+	files := []string{
+		"./ui/web/html/home.page.html",
+		"./ui/web/html/base.layout.html",
+		"./ui/web/html/footer.partial.html",
+	}
+
+	tempParse, err := template.ParseFiles(files...)
+	if err != nil {
+		log.Println(err.Error())
+		http.Error(w, "Internal Server Error", 500)
+		return
+	}
+
+	err = tempParse.Execute(w, nil)
+	if err != nil {
+		log.Println(err.Error())
+		http.Error(w, "Internal Server Error", 500)
+	}
+
+	//w.Write([]byte("Home Page!"))
 }
 
 // Обработчик страниц с записями
