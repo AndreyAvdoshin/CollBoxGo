@@ -7,6 +7,12 @@ import (
 	"path/filepath"
 )
 
+// Создаем структуру для хранения всех зависимостей веб-приложения
+type application struct {
+	errorLog *log.Logger
+	infoLog  *log.Logger
+}
+
 func main() {
 	// Открываем файл для записи логов
 	f, errlog := os.OpenFile("info.log", os.O_RDWR|os.O_CREATE, 0666)
@@ -14,15 +20,22 @@ func main() {
 		log.Fatal(errlog)
 	}
 	defer f.Close()
+
 	// Создаем логи
 	infoLog := log.New(f, "INFO\t", log.Ldate|log.Ltime)
-	errorLog := log.New(os.Stderr, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
+	errorLog := log.New(f, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
+
+	// Создаем ссылку на структуру и инициализирруем ее
+	app := &application{
+		errorLog: errorLog,
+		infoLog:  infoLog,
+	}
 
 	// Преобразование путей к обработчикам
 	mux := http.NewServeMux()
-	mux.HandleFunc("/", home)
-	mux.HandleFunc("/collbox", collbox)
-	mux.HandleFunc("/collbox/create", create)
+	mux.HandleFunc("/", app.home)
+	mux.HandleFunc("/collbox", app.collbox)
+	mux.HandleFunc("/collbox/create", app.create)
 
 	// Получаем доступ к статическим файлам
 	fileServer := http.FileServer(neuteredFileSystem{http.Dir("./ui/web/static")})
